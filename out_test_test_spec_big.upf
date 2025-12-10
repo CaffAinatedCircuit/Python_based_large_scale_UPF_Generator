@@ -1,0 +1,53 @@
+# Auto-generated low-power UPF (intent)
+
+# Domain AON
+create_power_domain AON -elements {top.u_pmu top.u_clk top.u_reset}
+create_supply_net aon_vdd
+create_supply_net vss
+create_supply_set SS_AON -primary {aon_vdd vss}
+set_domain_supply_net AON -primary_power_net aon_vdd -primary_ground_net vss
+# AON is default domain
+
+# Domain CORE
+create_power_domain CORE -elements {top.u_core top.u_alu top.u_icache}
+create_supply_net vdd_core
+create_supply_net vss
+create_supply_set SS_CORE -primary {vdd_core vss}
+set_domain_supply_net CORE -primary_power_net vdd_core -primary_ground_net vss
+# Shut-off condition for CORE: top.pmu.core_off_req
+
+# Domain PERI
+create_power_domain PERI -elements {top.u_uart top.u_spi top.u_gpio}
+create_supply_net vdd_peri
+create_supply_net vss
+create_supply_set SS_PERI -primary {vdd_peri vss}
+set_domain_supply_net PERI -primary_power_net vdd_peri -primary_ground_net vss
+# Shut-off condition for PERI: top.pmu.peri_off_req
+
+# Domain MEM
+create_power_domain MEM -elements {top.u_sram0 top.u_sram1}
+create_supply_net vdd_mem
+create_supply_net vss
+create_supply_set SS_MEM -primary {vdd_mem vss}
+set_domain_supply_net MEM -primary_power_net vdd_mem -primary_ground_net vss
+# Shut-off condition for MEM: top.pmu.mem_off_req
+
+# Chip-level Power State Table
+create_pst PST_CHIP -supplies {aon_vdd vdd_core vdd_mem vdd_peri vss}
+add_pst_state FULL_ON -pst PST_CHIP -state {aon_vdd 1.0 vdd_core 1.0 vdd_peri 1.8 vdd_mem 1.0 vss 0.0}
+add_pst_state CORE_LPM -pst PST_CHIP -state {aon_vdd 1.0 vdd_core 0.8 vdd_peri 1.8 vdd_mem 1.0 vss 0.0}
+add_pst_state PERI_OFF -pst PST_CHIP -state {aon_vdd 1.0 vdd_core 1.0 vdd_peri 0.0 vdd_mem 1.0 vss 0.0}
+add_pst_state MEM_RET -pst PST_CHIP -state {aon_vdd 1.0 vdd_core 0.0 vdd_peri 0.0 vdd_mem 0.6 vss 0.0}
+add_pst_state CHIP_OFF -pst PST_CHIP -state {aon_vdd 0.0 vdd_core 0.0 vdd_peri 0.0 vdd_mem 0.0 vss 0.0}
+
+# Isolation strategies
+set_isolation ISO_CORE_TO_AON -domain CORE -applies_to outputs -isolation_signal <FILL_ME_CORE_ISO_SIG> -isolation_sense low -clamp_value 0 -location parent
+set_isolation ISO_PERI_TO_AON -domain PERI -applies_to outputs -isolation_signal <FILL_ME_PERI_ISO_SIG> -isolation_sense low -clamp_value 0 -location parent
+set_isolation ISO_MEM_TO_AON -domain MEM -applies_to outputs -isolation_signal <FILL_ME_MEM_ISO_SIG> -isolation_sense low -clamp_value 0 -location parent
+set_isolation ISO_CORE_TO_PERI -domain CORE -applies_to outputs -isolation_signal <FILL_ME_CORE_ISO_SIG> -isolation_sense low -clamp_value 0 -location parent
+
+# Level shifter strategies
+set_level_shifter_strategy LS_CORE_TO_AON -from CORE -to AON -ls_type both -location parent
+set_level_shifter_strategy LS_AON_TO_PERI -from AON -to PERI -ls_type both -location parent
+set_level_shifter_strategy LS_CORE_TO_PERI -from CORE -to PERI -ls_type both -location parent
+set_level_shifter_strategy LS_PERI_TO_CORE -from PERI -to CORE -ls_type both -location parent

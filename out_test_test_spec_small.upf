@@ -1,0 +1,27 @@
+# Auto-generated low-power UPF (intent)
+
+# Domain AON
+create_power_domain AON -elements {top.u_pmu}
+create_supply_net aon_vdd
+create_supply_net vss
+create_supply_set SS_AON -primary {aon_vdd vss}
+set_domain_supply_net AON -primary_power_net aon_vdd -primary_ground_net vss
+# AON is default domain
+
+# Domain DMN1
+create_power_domain DMN1 -elements {top.u_blk1}
+create_supply_net vdd1
+create_supply_net vss
+create_supply_set SS_DMN1 -primary {vdd1 vss}
+set_domain_supply_net DMN1 -primary_power_net vdd1 -primary_ground_net vss
+# Shut-off condition for DMN1: top.pmu.dmn1_off_req
+
+# Chip-level Power State Table
+create_pst PST_CHIP -supplies {aon_vdd vdd1 vss}
+add_pst_state on -pst PST_CHIP -state {aon_vdd 1.0 vdd1 1.0 vss 0.0}
+add_pst_state dmn1_off -pst PST_CHIP -state {aon_vdd 1.0 vdd1 0.0 vss 0.0}
+
+# Isolation strategies
+set_isolation ISO_DMN1_TO_AON -domain DMN1 -applies_to outputs -isolation_signal <FILL_ME_DMN1_ISO_SIG> -isolation_sense low -clamp_value 0 -location parent
+
+# Level shifter strategies
